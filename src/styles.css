@@ -1,0 +1,709 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (the inline script in index.html toggles .dark). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scan local sources for class names. */
+@source "./**/*.{ts,tsx}";
+
+/*
+ * Theme tokens. The Glaze host used to inject its own framework styles; this
+ * port defines the equivalent tokens here (light + dark) so every bg-well,
+ * text-tertiary, rounded-card, etc. class resolves.
+ */
+:root {
+  color-scheme: light;
+  --background: #f6f6f4;
+  --text-primary: #1a1917;
+  --text-secondary: #57544d;
+  --text-tertiary: #837f76;
+  --text-quaternary: #aaa69b;
+  --accent: #d9531e;
+  --accent-contrast: #ffffff;
+  --well: #ffffff;
+  --control: #edebe6;
+  --control-subtle: #e7e5de;
+  --control-active: #dddbd3;
+  --separator: rgba(0, 0, 0, 0.12);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #171715;
+  --text-primary: #f2f0ea;
+  --text-secondary: #c4c1b8;
+  --text-tertiary: #948f83;
+  --text-quaternary: #6a665c;
+  --accent: #f0662f;
+  --accent-contrast: #ffffff;
+  --well: #201f1d;
+  --control: #2b2a27;
+  --control-subtle: #242321;
+  --control-active: #383632;
+  --separator: rgba(255, 255, 255, 0.14);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-quaternary: var(--text-quaternary);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-well: var(--well);
+  --color-control: var(--control);
+  --color-control-subtle: var(--control-subtle);
+  --color-control-active: var(--control-active);
+  --color-separator: var(--separator);
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --radius-panel: 16px;
+  --radius-pill: 9999px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text-primary);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Tauri window drag region (replaces the Glaze drag-region utility). */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+/* Small type presets the Glaze Text variants referenced. */
+.text-small-strong {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.text-small-mono {
+  font-size: 12px;
+  line-height: 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Film-strip motif ─────────────────────────────────────────────── */
+@keyframes film-scroll {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: -48px;
+  }
+}
+
+.film-strip-run {
+  animation: film-scroll 0.9s linear infinite;
+}
+
+@keyframes soft-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-soft-rise {
+  animation: soft-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Braun TG 60 faceplate — full-bleed, fluid ────────────────────────────
+   The window IS the panel: everything scales in vmin from the smallest
+   window up to fullscreen. No dead space, no floating card. */
+.faceplate-stage {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0 2px, rgba(0,0,0,0.022) 2px 4px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, rgba(0,0,0,0.012) 1px 3px),
+    linear-gradient(160deg, #ddd9d0 0%, #d3cfc6 45%, #c6c2b8 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+.faceplate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4vmin;
+  padding: 0.6vmin 0.8vmin;
+  color: #2b2925;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.faceplate-stamp {
+  position: absolute;
+  top: 2.2vmin;
+  left: 5vmin;
+  font-family: ui-monospace, Courier, monospace;
+  font-size: 1.8vmin;
+  letter-spacing: 0.35vmin;
+  color: rgba(0,0,0,0.28);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 1px rgba(0,0,0,0.18);
+}
+.faceplate-micro-label {
+  font-size: 1.3vmin;
+  letter-spacing: 0.35vmin;
+  font-weight: 600;
+  color: #4a463d;
+}
+/* Instrument grid: 2x2 square — timer+stats and meter up top,
+   transport and film gate below. The cells stretch to fill the window. */
+.faceplate-mid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1vmin;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.cluster {
+  position: relative;
+  background: linear-gradient(165deg, rgba(233,229,219,0.55), rgba(205,200,189,0.38));
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 1vmin;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    inset 0 -1px 0 rgba(43,41,37,0.10),
+    0 8px 24px rgba(0,0,0,0.22);
+  padding: 1vmin 1.4vmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7vmin;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  container-type: size;
+}
+/* Liquid-glass specular sweep across the top of each square. */
+.cluster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255,255,255,0.28), rgba(255,255,255,0) 34%);
+  pointer-events: none;
+}
+.cluster-info {
+  align-items: stretch;
+}
+.cluster-info .faceplate-counter {
+  align-self: center;
+}
+.faceplate-counter {
+  font-size: 4.5vmin;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #33312c;
+  white-space: nowrap;
+}
+.faceplate-counter-sep {
+  font-weight: 400;
+  color: #6b665a;
+  margin: 0 0.08em;
+}
+.faceplate-stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2vmin;
+  width: 100%;
+}
+.faceplate-stat-label {
+  flex-shrink: 0;
+  font-size: 1.8vmin;
+  letter-spacing: 0.24vmin;
+  font-weight: 500;
+  color: #2b2925;
+}
+.faceplate-stat-value {
+  font-size: 2.1vmin;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  color: #1f1d1a;
+  white-space: nowrap;
+}
+.faceplate-rule {
+  position: relative;
+  width: 100%;
+  height: 0.7vmin;
+  min-height: 3px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.55);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.faceplate-rule-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #c07f1e, #e8a83e);
+  transition: width 0.3s ease-out;
+}
+.faceplate-note {
+  margin-top: 0.4vmin;
+  text-align: center;
+  font-size: 1.35vmin;
+  letter-spacing: 0.12vmin;
+  color: #6b665a;
+}
+.faceplate-transport {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 2vmin;
+  width: 100%;
+}
+.pushbutton-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1vmin;
+}
+.pushbutton {
+  width: 100%;
+  max-width: 60cqh;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 1.2vmin;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.06s ease-out, box-shadow 0.06s ease-out, opacity 0.2s, filter 0.3s;
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,0.55),
+    inset 0 -5px 8px rgba(0,0,0,0.28),
+    0 6px 0 rgba(0,0,0,0.28),
+    0 9px 14px rgba(0,0,0,0.3);
+}
+/* Transport colors: LOAD amber, RUN green, STOP red. */
+.pushbutton-load {
+  background: linear-gradient(165deg, #f2c66d 0%, #dd9a2e 55%, #a86f1c 100%);
+  border-color: #6b4a12;
+}
+.pushbutton-run {
+  background: linear-gradient(165deg, #7fc98f 0%, #46a05c 55%, #2c6e3e 100%);
+  border-color: #1d4a29;
+}
+.pushbutton-stop {
+  background: linear-gradient(165deg, #e88a7b 0%, #c64a37 55%, #96291c 100%);
+  border-color: #5c1a11;
+}
+.pushbutton:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.35),
+    0 1px 0 rgba(0,0,0,0.28),
+    0 2px 4px rgba(0,0,0,0.25);
+}
+.pushbutton:disabled {
+  opacity: 0.35;
+  cursor: default;
+  filter: saturate(0.4);
+}
+.pushbutton-active {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 3px 9px rgba(0,0,0,0.35),
+    0 2px 0 rgba(0,0,0,0.28),
+    0 0 18px rgba(232,168,62,0.5);
+  filter: brightness(0.96) saturate(1.15);
+}
+/* Unresolved choice: the button breathes amber until it's picked. */
+@keyframes attn-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.22); }
+}
+.pushbutton-attn {
+  animation: attn-pulse 1.8s ease-in-out infinite;
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,0.55),
+    inset 0 -5px 8px rgba(0,0,0,0.28),
+    0 6px 0 rgba(0,0,0,0.28),
+    0 0 24px 7px rgba(232,168,62,0.8);
+}
+.pushbutton-dot {
+  width: 26%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 9999px;
+  background: #847f74;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.45);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.pushbutton-dot-on {
+  background: radial-gradient(circle at 35% 30%, #f5c06a, #dd8f22 70%);
+  box-shadow: 0 0 10px rgba(232,168,62,0.9), inset 0 -2px 3px rgba(120,60,0,0.4);
+}
+.faceplate-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2vmin;
+}
+.faceplate-led {
+  width: 1.6vmin;
+  height: 1.6vmin;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 9999px;
+  background: #847f74;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.45);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+.faceplate-led-on {
+  background: radial-gradient(circle at 35% 30%, #ffe1a3, #f0a83c 45%, #c67a1a 80%);
+  box-shadow: 0 0 14px 3px rgba(240,168,60,0.9), 0 0 34px 8px rgba(240,168,60,0.35);
+  animation: led-pulse 1.6s ease-in-out infinite;
+}
+@keyframes led-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.faceplate-status-text {
+  font-size: 1.5vmin;
+  letter-spacing: 0.35vmin;
+  font-weight: 500;
+  color: #2b2925;
+}
+.meter-bezel {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px #2b2925, 0 4px 10px rgba(60,55,45,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.meter-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1vmin;
+  width: 100%;
+}
+.meter-svg {
+  width: min(88cqw, 110cqh);
+  height: auto;
+  display: block;
+}
+/* Workers stepper: a tiny hardware counter in the setup strip. */
+.faceplate-stepper {
+  background: rgba(43,41,37,0.10);
+  border: 1px solid rgba(43,41,37,0.28);
+  border-radius: 0.6vmin;
+  color: #2b2925;
+  font-size: 1.5vmin;
+  line-height: 1;
+  width: 2.8vmin;
+  height: 2.8vmin;
+  min-width: 18px;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 0.5vmin;
+  vertical-align: middle;
+}
+.faceplate-stepper:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.faceplate-stepper-val {
+  display: inline-block;
+  min-width: 2.2vmin;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.faceplate-setup {
+  background: rgba(216, 212, 203, 0.52);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 1vmin;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+  padding: 0.7vmin 1.6vmin;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5vmin 2vmin;
+}
+.faceplate-quiet {
+  background: none;
+  border: none;
+  padding: 0.4vmin 0.2vmin;
+  font-size: 1.2vmin;
+  letter-spacing: 0.18vmin;
+  color: #7a756a;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  max-width: 34vmin;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.faceplate-quiet:hover {
+  color: #2b2925;
+}
+.faceplate-quiet-static {
+  cursor: default;
+}
+.faceplate-quiet-static:hover {
+  color: #7a756a;
+}
+.faceplate-error {
+  margin-top: 1.4vmin;
+  text-align: center;
+  font-size: 1.6vmin;
+  letter-spacing: 0.06vmin;
+  color: #a33b22;
+}
+.faceplate-drop-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43,41,37,0.72);
+  z-index: 10;
+}
+.faceplate-drop-overlay span {
+  font-size: 4vmin;
+  letter-spacing: 0.6vmin;
+  font-weight: 700;
+  color: #f4ecd8;
+  border: 0.4vmin dashed #e8a83e;
+  border-radius: 2vmin;
+  padding: 4vmin 6vmin;
+}
+
+/* ── Machine v3: texture, screws, stickers, film gate ───────────────────
+   The faceplate gets treated like a well-used piece of film gear. */
+.faceplate-texture {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+.faceplate-texture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(30,25,18,0.24) 100%);
+}
+
+/* Corner screws, each with its own slot angle. */
+.screws {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+.screw {
+  position: absolute;
+  width: 2.2vmin;
+  height: 2.2vmin;
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8e4da, #a09a8d 60%, #6e695e);
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.3);
+}
+.screw::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: rgba(40,36,30,0.65);
+  border-radius: 1px;
+}
+.screw-tl { top: 1.4vmin; left: 1.4vmin; }
+.screw-tl::after { transform: rotate(38deg); }
+.screw-tr { top: 1.4vmin; right: 1.4vmin; }
+.screw-tr::after { transform: rotate(-24deg); }
+.screw-bl { bottom: 1.4vmin; left: 1.4vmin; }
+.screw-bl::after { transform: rotate(71deg); }
+.screw-br { bottom: 1.4vmin; right: 1.4vmin; }
+.screw-br::after { transform: rotate(-52deg); }
+
+/* Sticker bomb: real PNG cutouts scattered like a bombed laptop lid.
+   UI panels float above it on plates so everything stays readable. */
+.sticker-bomb {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sticker-bomb-img {
+  position: absolute;
+}
+
+/* UI plates: warm-grey equipment labels floating over the bomb. */
+.faceplate-mid,
+.faceplate-setup,
+.faceplate-note,
+.faceplate-error {
+  position: relative;
+  z-index: 2;
+}
+.faceplate-error {
+  background: rgba(216, 212, 203, 0.92);
+  border: 1px solid rgba(43,41,37,0.4);
+  border-radius: 0.8vmin;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.28);
+  padding: 0.6vmin 1.6vmin;
+}
+.faceplate-transport,
+.faceplate-rule,
+.faceplate-stamp {
+  position: relative;
+  z-index: 2;
+}
+
+/* The film gate: a dark chamber holding ONE frame at a time. Each new
+   frame slides in from the right like film stepping through the gate. */
+.gate-single {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vmin;
+}
+.gate-label {
+  text-align: center;
+}
+.gate-chamber {
+  display: flex;
+  flex-direction: column;
+  background: #171410;
+  border: 0.35vmin solid #2b2925;
+  border-radius: 0.8vmin;
+  overflow: hidden;
+  box-shadow: inset 0 3px 10px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.4);
+}
+.gate-sprockets {
+  height: 1.8vmin;
+  min-height: 10px;
+  flex-shrink: 0;
+  background-image: radial-gradient(circle, rgba(244,236,216,0.85) 30%, transparent 34%);
+  background-size: 2.4vmin 100%;
+  background-repeat: repeat-x;
+  background-position: center;
+  opacity: 0.85;
+}
+.gate-viewport {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #0c0b09;
+}
+.gate-slide {
+  display: flex;
+  width: 200%;
+  height: 100%;
+}
+.gate-frame {
+  width: 50%;
+  height: 100%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.gate-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.gate-frame-name {
+  font-size: 1.3vmin;
+  color: #8a8474;
+  letter-spacing: 0.05vmin;
+  padding: 0 1vmin;
+  text-align: center;
+  word-break: break-all;
+}
+.gate-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6vmin;
+  letter-spacing: 0.4vmin;
+  color: #5a544a;
+  text-align: center;
+  padding: 0 2vmin;
+}
+.gate-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: ui-monospace, Courier, monospace;
+  font-size: 1.3vmin;
+  letter-spacing: 0.08vmin;
+  color: #f4ecd8;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  padding: 1.4vmin 1vmin 0.5vmin;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Setup strip: the unresolved OUT destination breathes until chosen. */
+@keyframes quiet-attn {
+  0%, 100% { text-shadow: none; }
+  50% { text-shadow: 0 0 9px rgba(232,168,62,0.95); }
+}
+.faceplate-quiet-attn {
+  animation: quiet-attn 1.8s ease-in-out infinite;
+  color: #2b2925;
+}
